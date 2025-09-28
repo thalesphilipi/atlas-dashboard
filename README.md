@@ -2,6 +2,13 @@
 
 Sistema de organização de dados pessoais desenvolvido em Flask com interface moderna e segura.
 
+
+ATENÇÃO NÃO INSIRA DADOS REAIS NA DEMO POIS ELA É ABERTA PARA O PUBLICO , A DEMO É APENAS PARA TESTAR O SISTEMA COM DADOS FICTICIOS !
+
+Demo : http://144.22.241.132:4404/   
+Senha/Pass : atlas123
+
+
 ## 🚀 Características
 
 - **Interface moderna**: Design responsivo com Tailwind CSS
