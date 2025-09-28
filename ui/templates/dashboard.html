@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Atlas{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Dashboard Atlas</h1>
+            <p class="text-gray-600">Visão geral dos seus dados organizados</p>
+        </div>
+        <div class="flex space-x-3">
+            <a href="{{ url_for('new_item') }}" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 font-medium">
+                + Cadastrar
+            </a>
+            <a href="{{ url_for('logout') }}" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+                Sair
+            </a>
+        </div>
+    </div>
+
+    <!-- Cards de Estatísticas -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-atlas-blue rounded-md flex items-center justify-center">
+                            <span class="text-white text-sm font-bold">📁</span>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Categorias</dt>
+                            <dd class="text-lg font-medium text-gray-900">{{ stats.total_categories }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-atlas-green rounded-md flex items-center justify-center">
+                            <span class="text-white text-sm font-bold">🔑</span>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Senhas</dt>
+                            <dd class="text-lg font-medium text-gray-900">{{ stats.total_passwords }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-atlas-yellow rounded-md flex items-center justify-center">
+                            <span class="text-white text-sm font-bold">📧</span>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Emails</dt>
+                            <dd class="text-lg font-medium text-gray-900">{{ stats.total_emails }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-atlas-red rounded-md flex items-center justify-center">
+                            <span class="text-white text-sm font-bold">🔐</span>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Chaves Privadas</dt>
+                            <dd class="text-lg font-medium text-gray-900">{{ stats.total_private_keys }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Categorias -->
+    <div class="bg-white shadow rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Categorias</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {% for category in stats.categories %}
+                <a href="{{ url_for('category_view', category_name=category.name) }}" 
+                   class="block p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    <div class="flex justify-between items-center">
+                        <h4 class="font-medium text-gray-900">{{ category.name.replace('_', ' ').title() }}</h4>
+                        <span class="text-sm text-gray-500">{{ category.count }} itens</span>
+                    </div>
+                </a>
+                {% endfor %}
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Itens Recentes -->
+    {% if recent_items %}
+    <div class="bg-white shadow rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Itens Recentes</h3>
+                <div class="flex items-center space-x-3">
+                    <label class="flex items-center">
+                        <input type="checkbox" id="selectAll" class="mr-2">
+                        <span class="text-sm text-gray-600">Selecionar todos</span>
+                    </label>
+                    <button id="bulkMoveBtn" 
+                            class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed" 
+                            disabled>
+                        Mover Selecionados
+                    </button>
+                    <button id="deleteSelected" 
+                            class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed" 
+                            disabled>
+                        Remover Selecionados
+                    </button>
+                </div>
+            </div>
+            <!-- Formulário para mover categoria -->
+            <form id="bulkMoveForm" method="POST" action="{{ url_for('bulk_move_category') }}" style="display: none;">
+                <input type="hidden" name="return_url" value="{{ request.url }}">
+                <input type="hidden" name="new_category" id="moveNewCategory">
+            </form>
+            
+            <!-- Formulário para remover -->
+            <form id="bulkDeleteForm" method="POST" action="{{ url_for('bulk_delete') }}">
+                <input type="hidden" name="return_url" value="{{ request.url }}">
+                <div class="space-y-3">
+                {% for item in recent_items %}
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                    <div class="flex justify-between items-start">
+                        <div class="flex items-start space-x-3">
+                            <input type="checkbox" name="item_ids" value="{{ item.id }}" class="item-checkbox mt-1">
+                            <div class="flex-1">
+                                 <h4 class="font-medium text-gray-900">{{ item.source_file }}</h4>
+                                 <div class="text-sm text-gray-600 mt-1 max-h-32 overflow-y-auto">
+                                     <pre class="whitespace-pre-wrap">{{ item.raw_content }}</pre>
+                                 </div>
+                                 <span class="text-xs text-gray-500 mt-2 block">{{ item.category_name }}</span>
+                             </div>
+                         </div>
+                        <div class="flex space-x-2 ml-4">
+                            <a href="{{ url_for('view_item', item_id=item.id) }}" 
+                               class="text-blue-600 hover:text-blue-800 text-sm">Ver</a>
+                            <a href="{{ url_for('edit_item', item_id=item.id) }}" 
+                               class="text-green-600 hover:text-green-800 text-sm">Editar</a>
+                            <a href="{{ url_for('move_item', item_id=item.id) }}" 
+                               class="text-yellow-600 hover:text-yellow-800 text-sm">Mover</a>
+                            <form method="POST" action="{{ url_for('delete_item', item_id=item.id) }}" class="inline">
+                                 <input type="hidden" name="return_url" value="{{ request.url }}">
+                                 <button type="submit" 
+                                         onclick="confirmDelete(event, '{{ item.source_file }}')"
+                                         class="text-red-600 hover:text-red-800 text-sm">Remover</button>
+                             </form>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

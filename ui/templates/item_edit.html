@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Editar: {{ item.source_file }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <!-- Header -->
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-900">Editar Item</h1>
+        <p class="text-gray-600">Categoria: {{ item.category_name }}</p>
+    </div>
+
+    <!-- Formulário -->
+    <form method="POST" class="space-y-6">
+        <!-- Source File -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <label for="source_file" class="block text-sm font-medium text-gray-700 mb-2">
+                Arquivo de Origem
+            </label>
+            <input type="text" 
+                   id="source_file" 
+                   name="source_file" 
+                   value="{{ item.source_file }}"
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                   required>
+        </div>
+
+        <!-- Raw Content -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <label for="raw_content" class="block text-sm font-medium text-gray-700 mb-2">
+                Conteúdo Original
+            </label>
+            <textarea id="raw_content" 
+                      name="raw_content" 
+                      rows="15"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-sm"
+                      required>{{ item.raw_content }}</textarea>
+            <p class="mt-2 text-sm text-gray-500">
+                Após salvar, as informações extraídas (senhas, emails, etc.) serão atualizadas automaticamente.
+            </p>
+        </div>
+
+        <!-- Botões -->
+        <div class="flex justify-between">
+            <a href="{{ url_for('view_item', item_id=item.id) }}" 
+               class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                Cancelar
+            </a>
+            <button type="submit" 
+                    class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                Salvar Alterações
+            </button>
+        </div>
+    </form>
+
+    <!-- Informações Atuais -->
+    <div class="mt-8 bg-gray-50 rounded-lg p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Informações Extraídas Atuais</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+            {% if item.passwords %}
+            <div>
+                <span class="font-medium text-red-700">Senhas:</span> {{ item.passwords|length }}
+            </div>
+            {% endif %}
+            {% if item.emails %}
+            <div>
+                <span class="font-medium text-blue-700">Emails:</span> {{ item.emails|length }}
+            </div>
+            {% endif %}
+            {% if item.urls %}
+            <div>
+                <span class="font-medium text-green-700">URLs:</span> {{ item.urls|length }}
+            </div>
+            {% endif %}
+            {% if item.private_keys %}
+            <div>
+                <span class="font-medium text-purple-700">Chaves:</span> {{ item.private_keys|length }}
+            </div>
+            {% endif %}
+            {% if item.seeds %}
+            <div>
+                <span class="font-medium text-yellow-700">Seeds:</span> {{ item.seeds|length }}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

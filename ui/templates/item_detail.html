@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}{{ item.source_file }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">{{ item.source_file }}</h1>
+            <p class="text-gray-600">Categoria: {{ item.category_name }}</p>
+        </div>
+        <div class="flex space-x-2">
+            <a href="{{ url_for('edit_item', item_id=item.id) }}" 
+               class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                Editar
+            </a>
+            <a href="{{ url_for('move_item', item_id=item.id) }}" 
+               class="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors">
+                Mover
+            </a>
+            <form method="POST" action="{{ url_for('delete_item', item_id=item.id) }}" class="inline">
+                <input type="hidden" name="return_url" value="{{ request.url }}">
+                <button type="submit" 
+                        onclick="confirmDelete(event, '{{ item.source_file }}')"
+                        class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">
+                    Remover
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Conteúdo Raw -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">Conteúdo Original</h2>
+        </div>
+        <div class="px-6 py-4">
+            <pre class="whitespace-pre-wrap text-sm text-gray-700 bg-gray-50 p-4 rounded-lg overflow-x-auto">{{ item.raw_content }}</pre>
+        </div>
+    </div>
+
+    <!-- Informações Extraídas -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Senhas -->
+        {% if item.passwords %}
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">Senhas</h3>
+            </div>
+            <div class="px-6 py-4">
+                {% for password in item.passwords %}
+                <div class="mb-2 p-3 bg-red-50 rounded-lg">
+                    <code class="text-sm text-red-800">{{ password }}</code>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Emails -->
+        {% if item.emails %}
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">Emails</h3>
+            </div>
+            <div class="px-6 py-4">
+                {% for email in item.emails %}
+                <div class="mb-2 p-3 bg-blue-50 rounded-lg">
+                    <code class="text-sm text-blue-800">{{ email }}</code>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- URLs -->
+        {% if item.urls %}
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">URLs</h3>
+            </div>
+            <div class="px-6 py-4">
+                {% for url in item.urls %}
+                <div class="mb-2 p-3 bg-green-50 rounded-lg">
+                    <a href="{{ url }}" target="_blank" class="text-sm text-green-800 hover:underline">{{ url }}</a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Chaves Privadas -->
+        {% if item.private_keys %}
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">Chaves Privadas</h3>
+            </div>
+            <div class="px-6 py-4">
+                {% for key in item.private_keys %}
+                <div class="mb-2 p-3 bg-purple-50 rounded-lg">
+                    <code class="text-sm text-purple-800 break-all">{{ key[:50] }}...</code>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Seeds -->
+        {% if item.seeds %}
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">Seed Phrases</h3>
+            </div>
+            <div class="px-6 py-4">
+                {% for seed in item.seeds %}
+                <div class="mb-2 p-3 bg-yellow-50 rounded-lg">
+                    <code class="text-sm text-yellow-800">{{ seed }}</code>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Voltar -->
+    <div class="mt-8">
+        <a href="{{ url_for('dashboard') }}" 
+           class="text-blue-600 hover:text-blue-800 transition-colors">
+            ← Voltar ao Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}

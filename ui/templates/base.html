@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Atlas Dashboard{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'atlas-blue': '#1e40af',
+                        'atlas-green': '#059669',
+                        'atlas-red': '#dc2626',
+                        'atlas-yellow': '#d97706'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <h1 class="text-xl font-bold text-atlas-blue">Atlas Dashboard</h1>
+                </div>
+                <nav class="flex space-x-4">
+                    <a href="{{ url_for('dashboard') }}" class="text-gray-600 hover:text-atlas-blue px-3 py-2 rounded-md text-sm font-medium">Dashboard</a>
+                    <a href="{{ url_for('search') }}" class="text-gray-600 hover:text-atlas-blue px-3 py-2 rounded-md text-sm font-medium">Buscar</a>
+                    <a href="{{ url_for('import_data') }}" class="text-gray-600 hover:text-atlas-blue px-3 py-2 rounded-md text-sm font-medium">Importar</a>
+                    <a href="{{ url_for('donate') }}" class="text-green-600 hover:text-green-800 px-3 py-2 rounded-md text-sm font-medium">💝 Apoiar</a>
+                    <a href="{{ url_for('change_password') }}" class="text-gray-600 hover:text-atlas-blue px-3 py-2 rounded-md text-sm font-medium">Alterar Senha</a>
+                    <a href="{{ url_for('logout') }}" class="text-red-600 hover:text-red-800 px-3 py-2 rounded-md text-sm font-medium">Sair</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+                {% for message in messages %}
+                    <div class="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded mb-4">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+                <div class="text-center md:text-left">
+                    <p class="text-gray-500 text-sm">Atlas Dashboard v0.1.0</p>
+                    <p class="text-gray-400 text-xs mt-1">Sistema de organização de dados pessoais</p>
+                </div>
+                
+                <div class="text-center">
+                    <p class="text-gray-500 text-sm">Desenvolvido por 
+                        <a href="https://www.linkedin.com/in/thalesphilipi/" target="_blank" rel="noopener noreferrer" 
+                           class="text-atlas-blue hover:text-blue-700 font-medium">Thales Philipi</a>
+                    </p>
+                    <p class="text-gray-400 text-xs mt-1">
+                        Powered by <a href="https://nexapp.com.br" target="_blank" rel="noopener noreferrer" 
+                                    class="text-atlas-blue hover:text-blue-700 font-medium">NexApp.com.br</a>
+                    </p>
+                </div>
+                
+                <div class="text-center md:text-right">
+                    <p class="text-gray-400 text-xs">Open Source</p>
+                    <p class="text-gray-400 text-xs mt-1">Disponível no GitHub</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <script>
+        // Confirmação de remoção
+        function confirmDelete(event, itemName) {
+            event.preventDefault();
+            if (confirm(`Tem certeza que deseja remover "${itemName}"?\n\nEsta ação não pode ser desfeita.`)) {
+                event.target.closest('form').submit();
+            }
+            return false;
+        }
+
+        // Controle de seleção múltipla
+        document.addEventListener('DOMContentLoaded', function() {
+            const selectAllCheckbox = document.getElementById('selectAll');
+            const itemCheckboxes = document.querySelectorAll('.item-checkbox');
+            const deleteSelectedBtn = document.getElementById('deleteSelected');
+            const bulkDeleteForm = document.getElementById('bulkDeleteForm');
+            const moveSelectedBtn = document.getElementById('bulkMoveBtn');
+            const bulkMoveForm = document.getElementById('bulkMoveForm');
+
+            if (selectAllCheckbox && itemCheckboxes.length > 0) {
+                // Selecionar/deselecionar todos
+                selectAllCheckbox.addEventListener('change', function() {
+                    itemCheckboxes.forEach(checkbox => {
+                        checkbox.checked = this.checked;
+                    });
+                    updateDeleteButton();
+                });
+
+                // Atualizar estado do botão quando checkboxes individuais mudam
+                itemCheckboxes.forEach(checkbox => {
+                    checkbox.addEventListener('change', function() {
+                        updateSelectAllState();
+                        updateDeleteButton();
+                    });
+                });
+
+                // Ação do botão de deletar selecionados
+                if (deleteSelectedBtn) {
+                    deleteSelectedBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        const selectedItems = document.querySelectorAll('.item-checkbox:checked');
+                        if (selectedItems.length === 0) {
+                            alert('Selecione pelo menos um item para remover.');
+                            return;
+                        }
+                        
+                        const count = selectedItems.length;
+                        const message = count === 1 ? 
+                            'Tem certeza que deseja remover 1 item selecionado?' : 
+                            `Tem certeza que deseja remover ${count} itens selecionados?`;
+                        
+                        if (confirm(message + '\n\nEsta ação não pode ser desfeita.')) {
+                            bulkDeleteForm.submit();
+                        }
+                    });
+                }
+
+                // Ação do botão de mover selecionados
+                if (moveSelectedBtn && bulkMoveForm) {
+                    moveSelectedBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        const selectedItems = document.querySelectorAll('.item-checkbox:checked');
+                        if (selectedItems.length === 0) {
+                            alert('Selecione pelo menos um item para mover.');
+                            return;
+                        }
+                        
+                        // Mostrar modal
+                        document.getElementById('categoryModal').classList.remove('hidden');
+                        
+                        // Armazenar itens selecionados para uso posterior
+                        window.selectedItemsForMove = selectedItems;
+                    });
+                }
+            }
+
+            function updateSelectAllState() {
+                const checkedCount = document.querySelectorAll('.item-checkbox:checked').length;
+                const totalCount = itemCheckboxes.length;
+                
+                if (checkedCount === 0) {
+                    selectAllCheckbox.checked = false;
+                    selectAllCheckbox.indeterminate = false;
+                } else if (checkedCount === totalCount) {
+                    selectAllCheckbox.checked = true;
+                    selectAllCheckbox.indeterminate = false;
+                } else {
+                    selectAllCheckbox.checked = false;
+                    selectAllCheckbox.indeterminate = true;
+                }
+            }
+
+            function updateDeleteButton() {
+                const checkedCount = document.querySelectorAll('.item-checkbox:checked').length;
+                if (deleteSelectedBtn) {
+                    deleteSelectedBtn.disabled = checkedCount === 0;
+                    deleteSelectedBtn.textContent = checkedCount === 0 ? 
+                        'Remover Selecionados' : 
+                        `Remover Selecionados (${checkedCount})`;
+                }
+                if (moveSelectedBtn) {
+                    moveSelectedBtn.disabled = checkedCount === 0;
+                    moveSelectedBtn.textContent = checkedCount === 0 ? 
+                        'Mover Selecionados' : 
+                        `Mover Selecionados (${checkedCount})`;
+                }
+            }
+
+            // Controle do modal de categoria
+            const categoryModal = document.getElementById('categoryModal');
+            const categorySelect = document.getElementById('categorySelect');
+            const newCategoryDiv = document.getElementById('newCategoryDiv');
+            const newCategoryInput = document.getElementById('newCategoryInput');
+            const cancelMoveBtn = document.getElementById('cancelMoveBtn');
+            const confirmMoveBtn = document.getElementById('confirmMoveBtn');
+
+            if (categorySelect) {
+                categorySelect.addEventListener('change', function() {
+                    if (this.value === '__new__') {
+                        newCategoryDiv.classList.remove('hidden');
+                        newCategoryInput.focus();
+                    } else {
+                        newCategoryDiv.classList.add('hidden');
+                    }
+                    updateConfirmButton();
+                });
+            }
+
+            if (newCategoryInput) {
+                newCategoryInput.addEventListener('input', updateConfirmButton);
+            }
+
+            if (cancelMoveBtn) {
+                cancelMoveBtn.addEventListener('click', function() {
+                    closeModal();
+                });
+            }
+
+            if (confirmMoveBtn) {
+                confirmMoveBtn.addEventListener('click', function() {
+                    const selectedCategory = categorySelect.value;
+                    let finalCategory = '';
+
+                    if (selectedCategory === '__new__') {
+                        finalCategory = newCategoryInput.value.trim();
+                    } else {
+                        finalCategory = selectedCategory;
+                    }
+
+                    if (finalCategory && window.selectedItemsForMove) {
+                        // Limpar formulário anterior
+                        const existingInputs = bulkMoveForm.querySelectorAll('input[name="item_ids"]');
+                        existingInputs.forEach(input => input.remove());
+
+                        // Copiar checkboxes selecionados para o formulário de mover
+                        window.selectedItemsForMove.forEach(checkbox => {
+                            const hiddenInput = document.createElement('input');
+                            hiddenInput.type = 'hidden';
+                            hiddenInput.name = 'item_ids';
+                            hiddenInput.value = checkbox.value;
+                            bulkMoveForm.appendChild(hiddenInput);
+                        });
+
+                        // Definir categoria de destino
+                        document.getElementById('moveNewCategory').value = finalCategory;
+
+                        const count = window.selectedItemsForMove.length;
+                        const message = count === 1 ? 
+                            `Mover 1 item para a categoria "${finalCategory}"?` : 
+                            `Mover ${count} itens para a categoria "${finalCategory}"?`;
+
+                        if (confirm(message)) {
+                            bulkMoveForm.submit();
+                        }
+                    }
+                    closeModal();
+                });
+            }
+
+            function updateConfirmButton() {
+                const selectedCategory = categorySelect.value;
+                let isValid = false;
+
+                if (selectedCategory === '__new__') {
+                    isValid = newCategoryInput.value.trim().length > 0;
+                } else {
+                    isValid = selectedCategory.length > 0;
+                }
+
+                confirmMoveBtn.disabled = !isValid;
+            }
+
+            function closeModal() {
+                categoryModal.classList.add('hidden');
+                categorySelect.value = '';
+                newCategoryDiv.classList.add('hidden');
+                newCategoryInput.value = '';
+                confirmMoveBtn.disabled = true;
+                window.selectedItemsForMove = null;
+            }
+
+            // Fechar modal ao clicar fora
+            if (categoryModal) {
+                categoryModal.addEventListener('click', function(e) {
+                    if (e.target === categoryModal) {
+                        closeModal();
+                    }
+                });
+            }
+        });
+    </script>
+
+    <!-- Modal para seleção de categoria -->
+    <div id="categoryModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+                <div class="p-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Selecionar Categoria</h3>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Categoria de destino:
+                        </label>
+                        <select id="categorySelect" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">Selecione uma categoria...</option>
+                            {% if categories %}
+                                {% for category in categories %}
+                                <option value="{{ category.name }}">{{ category.name }} ({{ category.count }} itens)</option>
+                                {% endfor %}
+                            {% endif %}
+                            <option value="__new__">+ Criar nova categoria</option>
+                        </select>
+                    </div>
+                    
+                    <div id="newCategoryDiv" class="mb-4 hidden">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Nome da nova categoria:
+                        </label>
+                        <input type="text" id="newCategoryInput" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Digite o nome da categoria">
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3">
+                        <button id="cancelMoveBtn" class="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50">
+                            Cancelar
+                        </button>
+                        <button id="confirmMoveBtn" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400" disabled>
+                            Mover Itens
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

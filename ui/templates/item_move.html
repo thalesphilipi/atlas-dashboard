@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}Mover Item{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl font-bold text-gray-900">Mover Item</h1>
+        <a href="{{ url_for('view_item', item_id=item.id) }}" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+            Voltar
+        </a>
+    </div>
+
+    <!-- Info do Item -->
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+        <h3 class="text-lg font-semibold text-blue-900 mb-2">{{ item.source_file }}</h3>
+        <p class="text-blue-700">
+            <strong>Categoria Atual:</strong> 
+            <span class="bg-blue-100 px-2 py-1 rounded text-sm">{{ item.category_name }}</span>
+        </p>
+    </div>
+
+    <!-- Formulário -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <form method="POST" class="space-y-6">
+            <!-- Categorias Existentes -->
+            <div>
+                <label for="existing_category" class="block text-sm font-medium text-gray-700 mb-2">
+                    Mover para Categoria Existente
+                </label>
+                <select id="existing_category" 
+                        name="new_category" 
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">-- Selecione uma categoria --</option>
+                    {% for category in categories %}
+                    {% if category.name != item.category_name %}
+                    <option value="{{ category.name }}">{{ category.name }} ({{ category.count }} itens)</option>
+                    {% endif %}
+                    {% endfor %}
+                </select>
+                <p class="text-sm text-gray-500 mt-1">Escolha uma das categorias existentes</p>
+            </div>
+
+            <!-- OU Nova Categoria -->
+            <div class="border-t pt-4">
+                <label for="new_category_input" class="block text-sm font-medium text-gray-700 mb-2">
+                    OU Criar Nova Categoria
+                </label>
+                <input type="text" 
+                       id="new_category_input" 
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                       placeholder="Digite o nome da nova categoria">
+                <p class="text-sm text-gray-500 mt-1">Digite o nome para criar uma nova categoria</p>
+            </div>
+
+            <!-- Preview -->
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <h4 class="font-medium text-gray-900 mb-2">Preview do Conteúdo:</h4>
+                <div class="text-sm text-gray-600 max-h-32 overflow-y-auto">
+                    <pre class="whitespace-pre-wrap">{{ item.raw_content[:200] }}{% if item.raw_content|length > 200 %}...{% endif %}</pre>
+                </div>
+            </div>
+
+            <!-- Botões -->
+            <div class="flex space-x-4">
+                <button type="submit" 
+                        class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 font-medium">
+                    Mover Item
+                </button>
+                <a href="{{ url_for('view_item', item_id=item.id) }}" 
+                   class="bg-gray-300 text-gray-700 px-6 py-2 rounded hover:bg-gray-400 font-medium">
+                    Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Gerenciar seleção entre categoria existente e nova
+const existingSelect = document.getElementById('existing_category');
+const newInput = document.getElementById('new_category_input');
+
+// Limpar o outro campo quando um for selecionado
+existingSelect.addEventListener('change', function() {
+    if (this.value) {
+        newInput.value = '';
+    }
+});
+
+newInput.addEventListener('input', function() {
+    if (this.value.trim()) {
+        existingSelect.value = '';
+    }
+});
+
+// Validar formulário
+document.querySelector('form').addEventListener('submit', function(e) {
+    const existingCategory = existingSelect.value;
+    const newCategory = newInput.value.trim();
+    const currentCategory = '{{ item.category_name }}';
+    
+    // Verificar se pelo menos uma opção foi selecionada
+    if (!existingCategory && !newCategory) {
+        e.preventDefault();
+        alert('Selecione uma categoria existente ou digite uma nova categoria!');
+        return false;
+    }
+    
+    // Determinar qual categoria será usada
+    const targetCategory = existingCategory || newCategory;
+    
+    // Verificar se é diferente da atual
+    if (targetCategory === currentCategory) {
+        e.preventDefault();
+        alert('A categoria selecionada deve ser diferente da atual!');
+        return false;
+    }
+    
+    // Atualizar o campo hidden para envio
+    if (newCategory) {
+        // Criar um input hidden para a nova categoria
+        const hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.name = 'new_category';
+        hiddenInput.value = newCategory;
+        this.appendChild(hiddenInput);
+        existingSelect.name = ''; // Remover name do select
+    }
+    
+    // Confirmação
+    const action = existingCategory ? 'mover para' : 'criar e mover para';
+    if (!confirm(`Tem certeza que deseja ${action} a categoria "${targetCategory}"?`)) {
+        e.preventDefault();
+        return false;
+    }
+});
+</script>
+{% endblock %}

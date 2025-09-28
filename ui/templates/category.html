@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}{{ category_name.replace('_', ' ').title() }} - Atlas{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Cabeçalho -->
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">{{ category_name.replace('_', ' ').title() }}</h1>
+            <p class="text-gray-600">{{ items|length }} itens encontrados</p>
+        </div>
+        <div class="flex items-center space-x-3">
+            {% if items %}
+            <label class="flex items-center">
+                <input type="checkbox" id="selectAll" class="mr-2">
+                <span class="text-sm text-gray-600">Selecionar todos</span>
+            </label>
+            <button id="bulkMoveBtn" 
+                    class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed" 
+                    disabled>
+                Mover Selecionados
+            </button>
+            <button id="deleteSelected" 
+                    class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed" 
+                    disabled>
+                Remover Selecionados
+            </button>
+            {% endif %}
+            <a href="{{ url_for('dashboard') }}" 
+               class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
+                Voltar
+            </a>
+        </div>
+    </div>
+
+    <!-- Itens -->
+    {% if items %}
+    <!-- Formulário para mover categoria -->
+    <form id="bulkMoveForm" method="POST" action="{{ url_for('bulk_move_category') }}" style="display: none;">
+        <input type="hidden" name="return_url" value="{{ request.url }}">
+        <input type="hidden" name="new_category" id="moveNewCategory">
+    </form>
+    
+    <!-- Formulário para remover -->
+    <form id="bulkDeleteForm" method="POST" action="{{ url_for('bulk_delete') }}">
+        <input type="hidden" name="return_url" value="{{ request.url }}">
+        <div class="space-y-4">
+        {% for item in items %}
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex justify-between items-start mb-4">
+                <div class="flex items-start space-x-3">
+                    <input type="checkbox" name="item_ids" value="{{ item.id }}" class="item-checkbox mt-1">
+                    <h3 class="text-lg font-semibold text-gray-900">{{ item.source_file }}</h3>
+                </div>
+                <div class="flex space-x-3">
+                    <a href="{{ url_for('view_item', item_id=item.id) }}" 
+                       class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors">
+                        Ver
+                    </a>
+                    <a href="{{ url_for('edit_item', item_id=item.id) }}" 
+                       class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 transition-colors">
+                        Editar
+                    </a>
+                    <a href="{{ url_for('move_item', item_id=item.id) }}" 
+                       class="bg-yellow-600 text-white px-3 py-1 rounded text-sm hover:bg-yellow-700 transition-colors">
+                        Mover
+                    </a>
+                    <form method="POST" action="{{ url_for('delete_item', item_id=item.id) }}" class="inline">
+                         <input type="hidden" name="return_url" value="{{ request.url }}">
+                         <button type="submit" 
+                                 onclick="confirmDelete(event, '{{ item.source_file }}')"
+                                 class="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 transition-colors">
+                             Remover
+                         </button>
+                     </form>
+                </div>
+            </div>
+            
+            <!-- Conteúdo Raw (limitado) -->
+            {% if item.raw_content %}
+            <div class="mb-4">
+                <h4 class="text-sm font-medium text-gray-700 mb-2">Conteúdo:</h4>
+                <div class="text-gray-700 text-sm leading-relaxed max-h-48 overflow-y-auto bg-gray-50 p-3 rounded">
+                    <pre class="whitespace-pre-wrap">{{ item.raw_content }}</pre>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Informações Extraídas -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Senhas -->
+                {% if item.passwords %}
+                <div>
+                    <h4 class="text-sm font-medium text-gray-700 mb-2">Senhas ({{ item.passwords|length }})</h4>
+                    <div class="space-y-1">
+                        {% for password in item.passwords[:3] %}
+                        <div class="bg-green-50 text-green-800 px-2 py-1 rounded text-xs font-mono">
+                            {{ password }}
+                        </div>
+                        {% endfor %}
+                        {% if item.passwords|length > 3 %}
+                        <div class="text-xs text-gray-500">+{{ item.passwords|length - 3 }} mais</div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Emails -->
+                {% if item.emails %}
+                <div>
+                    <h4 class="text-sm font-medium text-gray-700 mb-2">Emails ({{ item.emails|length }})</h4>
+                    <div class="space-y-1">
+                        {% for email in item.emails[:3] %}
+                        <div class="bg-blue-50 text-blue-800 px-2 py-1 rounded text-xs">
+                            {{ email }}
+                        </div>
+                        {% endfor %}
+                        {% if item.emails|length > 3 %}
+                        <div class="text-xs text-gray-500">+{{ item.emails|length - 3 }} mais</div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- URLs -->
+                {% if item.urls %}
+                <div>
+                    <h4 class="text-sm font-medium text-gray-700 mb-2">URLs ({{ item.urls|length }})</h4>
+                    <div class="space-y-1">
+                        {% for url in item.urls[:2] %}
+                        <div class="bg-yellow-50 text-yellow-800 px-2 py-1 rounded text-xs">
+                            {{ url[:30] }}{% if url|length > 30 %}...{% endif %}
+                        </div>
+                        {% endfor %}
+                        {% if item.urls|length > 2 %}
+                        <div class="text-xs text-gray-500">+{{ item.urls|length - 2 }} mais</div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Chaves Privadas -->
+                {% if item.private_keys %}
+                <div>
+                    <h4 class="text-sm font-medium text-gray-700 mb-2">Chaves Privadas ({{ item.private_keys|length }})</h4>
+                    <div class="space-y-1">
+                        {% for key in item.private_keys[:2] %}
+                        <div class="bg-red-50 text-red-800 px-2 py-1 rounded text-xs font-mono">
+                            {{ key[:20] }}...
+                        </div>
+                        {% endfor %}
+                        {% if item.private_keys|length > 2 %}
+                        <div class="text-xs text-gray-500">+{{ item.private_keys|length - 2 }} mais</div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Seeds -->
+                {% if item.seeds %}
+                <div>
+                    <h4 class="text-sm font-medium text-gray-700 mb-2">Seeds ({{ item.seeds|length }})</h4>
+                    <div class="space-y-1">
+                        {% for seed in item.seeds[:1] %}
+                        <div class="bg-purple-50 text-purple-800 px-2 py-1 rounded text-xs">
+                            {{ seed[:30] }}...
+                        </div>
+                        {% endfor %}
+                        {% if item.seeds|length > 1 %}
+                        <div class="text-xs text-gray-500">+{{ item.seeds|length - 1 }} mais</div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+        </div>
+    </form>
+    {% else %}
+    <div class="text-center py-12">
+        <p class="text-gray-500">Nenhum item encontrado nesta categoria.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

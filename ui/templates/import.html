@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block title %}Importar Dados{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="bg-white shadow rounded-lg p-6">
+        <h1 class="text-2xl font-bold text-gray-900 mb-6">Importar Dados</h1>
+        
+        <!-- Explicação sobre como funciona -->
+        <div class="bg-blue-50 border border-blue-200 rounded-md p-4 mb-6">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-blue-800">
+                        Como funciona a importação
+                    </h3>
+                    <div class="mt-2 text-sm text-blue-700">
+                        <p class="mb-2">O sistema de importação do Atlas Dashboard permite carregar dados de um arquivo JSON estruturado. Aqui está como funciona:</p>
+                        <ul class="list-disc list-inside space-y-1">
+                            <li><strong>Formato esperado:</strong> Arquivo JSON com estrutura de categorias e itens</li>
+                            <li><strong>Localização:</strong> O arquivo deve estar em "../dados_organizados.json" (pasta pai do projeto)</li>
+                            <li><strong>Processamento:</strong> O sistema lê o arquivo e organiza os dados em categorias</li>
+                            <li><strong>Duplicatas:</strong> Itens duplicados são automaticamente detectados e removidos</li>
+                            <li><strong>Segurança:</strong> Todos os dados são armazenados localmente no SQLite</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estrutura do arquivo JSON -->
+        <div class="bg-gray-50 border border-gray-200 rounded-md p-4 mb-6">
+            <h4 class="text-sm font-medium text-gray-800 mb-2">Estrutura esperada do arquivo JSON:</h4>
+            <pre class="text-xs text-gray-600 bg-white p-3 rounded border overflow-x-auto"><code>{
+  "categoria1": [
+    {
+      "title": "Nome do item",
+      "username": "usuario@exemplo.com",
+      "password": "senha123",
+      "url": "https://exemplo.com",
+      "notes": "Observações opcionais"
+    }
+  ],
+  "categoria2": [
+    // mais itens...
+  ]
+}</code></pre>
+        </div>
+        
+        <!-- Aviso de Proteção -->
+        <div class="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-6">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-yellow-800">
+                        ⚠️ Importante: Leia antes de importar
+                    </h3>
+                    <div class="mt-2 text-sm text-yellow-700">
+                        <p class="mb-2">Esta operação irá <strong>adicionar</strong> os dados do arquivo JSON ao banco atual. Certifique-se de que:</p>
+                        <ul class="list-disc list-inside space-y-1">
+                            <li>Você fez backup dos dados atuais (se necessário)</li>
+                            <li>O arquivo "../dados_organizados.json" existe e está no formato correto</li>
+                            <li>Não há outros usuários usando o sistema simultaneamente</li>
+                            <li>Você tem permissão para importar estes dados</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulário de Confirmação -->
+        <form id="importForm" method="POST" action="{{ url_for('import_data') }}">
+            <div class="space-y-4">
+                <!-- Primeira Pergunta -->
+                <div class="bg-gray-50 p-4 rounded-md">
+                    <label class="flex items-start">
+                        <input type="checkbox" id="confirm1" name="confirm1" class="mt-1 mr-3" required>
+                        <span class="text-sm text-gray-700">
+                            <strong>Li e entendi como funciona a importação</strong> e confirmo que o arquivo "../dados_organizados.json" está no formato correto e no local esperado.
+                        </span>
+                    </label>
+                </div>
+
+                <!-- Segunda Pergunta -->
+                <div class="bg-gray-50 p-4 rounded-md">
+                    <label class="flex items-start">
+                        <input type="checkbox" id="confirm2" name="confirm2" class="mt-1 mr-3" required>
+                        <span class="text-sm text-gray-700">
+                            <strong>Confirmo que fiz backup dos dados atuais</strong> (se necessário) e tenho certeza de que desejo prosseguir com a importação.
+                        </span>
+                    </label>
+                </div>
+
+                <!-- Informações do Arquivo -->
+                <div class="bg-blue-50 p-4 rounded-md">
+                    <h4 class="text-sm font-medium text-blue-800 mb-2">Arquivo a ser importado:</h4>
+                    <p class="text-sm text-blue-700 font-mono">../dados_organizados.json</p>
+                </div>
+
+                <!-- Botões -->
+                <div class="flex justify-between pt-4">
+                    <a href="{{ url_for('dashboard') }}" 
+                       class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                        Cancelar
+                    </a>
+                    
+                    <button type="submit" 
+                            id="importBtn"
+                            disabled
+                            class="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed">
+                        Importar Dados
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Habilitar botão apenas quando ambas confirmações estiverem marcadas
+document.addEventListener('DOMContentLoaded', function() {
+    const confirm1 = document.getElementById('confirm1');
+    const confirm2 = document.getElementById('confirm2');
+    const importBtn = document.getElementById('importBtn');
+    
+    function checkConfirmations() {
+        if (confirm1.checked && confirm2.checked) {
+            importBtn.disabled = false;
+            importBtn.classList.remove('disabled:bg-gray-300', 'disabled:cursor-not-allowed');
+            importBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+        } else {
+            importBtn.disabled = true;
+            importBtn.classList.add('disabled:bg-gray-300', 'disabled:cursor-not-allowed');
+            importBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+        }
+    }
+    
+    confirm1.addEventListener('change', checkConfirmations);
+    confirm2.addEventListener('change', checkConfirmations);
+    
+    // Confirmação final antes do envio
+    document.getElementById('importForm').addEventListener('submit', function(e) {
+        if (!confirm('Tem certeza absoluta de que deseja importar os dados? Esta ação não pode ser desfeita.')) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
+{% endblock %}

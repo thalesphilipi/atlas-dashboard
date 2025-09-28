@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Atlas Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+    <div class="max-w-md w-full space-y-8">
+        <div>
+            <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+                Atlas Dashboard
+            </h2>
+            <p class="mt-2 text-center text-sm text-gray-600">
+                Sistema de organização de dados pessoais
+            </p>
+            <p class="mt-1 text-center text-xs text-gray-500">
+                Digite a senha master para acessar
+            </p>
+        </div>
+        
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <form class="mt-8 space-y-6" method="POST">
+            <div>
+                <label for="password" class="sr-only">Senha</label>
+                <input id="password" name="password" type="password" required 
+                       class="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" 
+                       placeholder="Senha master">
+            </div>
+            
+            <div>
+                <button type="submit" 
+                        class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Entrar
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Footer -->
+    <footer class="fixed bottom-0 left-0 right-0 bg-gray-50 border-t border-gray-200 py-2">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-center items-center text-xs text-gray-500">
+                <span>Desenvolvido por 
+                    <a href="https://www.linkedin.com/in/thalesphilipi/" target="_blank" class="text-indigo-600 hover:text-indigo-800">Thales Philipi</a>
+                    | Powered by 
+                    <a href="https://nexapp.com.br" target="_blank" class="text-indigo-600 hover:text-indigo-800">NexApp.com.br</a>
+                    | Open Source
+                </span>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
